@@ -14,21 +14,27 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBarChangeListener {
 
     private static final int REQUEST_TAKE_PHOTO = 1;
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
+    private ArrayList<ImageEntry> loadedImages;
+
     private int currentPhotoSize;
+
+    private SeekBar imageSeek;
 
     private SQLiteDatabase db;
 
@@ -58,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
                     EditText tagsInput = (EditText) findViewById(R.id.input_tags);
                     tagsInput.setText("");
 
+                    imageSeek.setVisibility(View.INVISIBLE);
+
                     break;
             }
         }
@@ -71,6 +79,9 @@ public class MainActivity extends AppCompatActivity {
         db = openOrCreateDatabase("phototagger.db", MODE_PRIVATE, null);
 
         db.execSQL("CREATE TABLE IF NOT EXISTS photos (path TEXT, size INTEGER, tags TEXT);");
+
+        imageSeek = (SeekBar) findViewById(R.id.seek_images);
+        imageSeek.setOnSeekBarChangeListener(this);
     }
 
     private void captureImage() {
@@ -175,30 +186,45 @@ public class MainActivity extends AppCompatActivity {
 
         if (!sizeQuery.equals("") && !tagsQuery.equals("")) {
             c = db.rawQuery(
-                    "SELECT * FROM photos WHERE " + sizeQuery + " AND " + tagsQuery + " LIMIT 1",
+                    "SELECT * FROM photos WHERE " + sizeQuery + " AND " + tagsQuery,
                     new String[] {});
         } else if (!sizeQuery.equals("")) {
             c = db.rawQuery(
-                    "SELECT * FROM photos WHERE " + sizeQuery + " LIMIT 1",
+                    "SELECT * FROM photos WHERE " + sizeQuery,
                     new String[] {});
         } else if (!tagsQuery.equals("")) {
             c = db.rawQuery(
-                    "SELECT * FROM photos WHERE " + tagsQuery + " LIMIT 1",
+                    "SELECT * FROM photos WHERE " + tagsQuery,
                     new String[] {});
         } else {
             c = db.rawQuery(
-                    "SELECT * FROM photos LIMIT 1",
+                    "SELECT * FROM photos",
                     new String[] {});
         }
 
+        loadedImages = new ArrayList<>();
+
         if (c.moveToFirst()) {
-            currentPhotoPath = c.getString(c.getColumnIndexOrThrow("path"));
-            String newTags = c.getString(c.getColumnIndexOrThrow("tags"));
+            do {
+                String curPath = c.getString(c.getColumnIndex("path"));
+                String curTags = c.getString(c.getColumnIndex("tags"));
 
-            displayImage(currentPhotoPath);
+                loadedImages.add(new ImageEntry(curPath, curTags));
+            } while (c.moveToNext());
 
-            tagsInput.setText(newTags);
+            ImageEntry firstEntry = loadedImages.get(0);
+
+            displayImage(firstEntry.getPath());
+            tagsInput.setText(firstEntry.getTags());
+
+            if (loadedImages.size() > 1) {
+                imageSeek.setMax(loadedImages.size() - 1);
+                imageSeek.setVisibility(View.VISIBLE);
+            } else {
+                imageSeek.setVisibility(View.INVISIBLE);
+            }
         } else {
+            imageSeek.setVisibility(View.INVISIBLE);
             Toast.makeText(this, "No Results", Toast.LENGTH_SHORT).show();
         }
     }
@@ -232,5 +258,23 @@ public class MainActivity extends AppCompatActivity {
         }
 
         c.close();
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+        ImageEntry entry = loadedImages.get(i);
+
+        displayImage(entry.getPath());
+        ((EditText) findViewById(R.id.input_tags)).setText(entry.getTags());
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+
     }
 }
