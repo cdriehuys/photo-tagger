@@ -4,16 +4,17 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.media.Image;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,6 +39,9 @@ public class MainActivity extends AppCompatActivity {
             case R.id.btn_capture:
                 captureImage();
                 break;
+            case R.id.btn_load:
+                loadImage();
+                break;
             case R.id.btn_save:
                 saveImage();
                 break;
@@ -49,15 +53,11 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_TAKE_PHOTO:
-                    final File file = new File(currentPhotoPath);
-                    try {
-                        Bitmap captureBmp = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.fromFile(file));
-                        displayImage(captureBmp);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    displayImage(currentPhotoPath);
+
+                    EditText tagsInput = (EditText) findViewById(R.id.input_tags);
+                    tagsInput.setText("");
+
                     break;
             }
         }
@@ -114,15 +114,98 @@ public class MainActivity extends AppCompatActivity {
         return image;
     }
 
-    private void displayImage(Bitmap bitmap) {
+    private void displayImage(String path) {
+        File file = new File(path);
+        Bitmap bitmap;
+
+        try {
+            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.fromFile(file));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
         ImageView imgView = (ImageView) findViewById(R.id.current_image);
         imgView.setImageBitmap(bitmap);
 
         currentPhotoSize = bitmap.getByteCount();
+
+        EditText sizeInput = (EditText) findViewById(R.id.input_size);
+        sizeInput.setText(String.valueOf(currentPhotoSize));
+    }
+
+    private void loadImage() {
+        EditText tagsInput = (EditText) findViewById(R.id.input_tags);
+        EditText sizeInput = (EditText) findViewById(R.id.input_size);
+
+        String tags = tagsInput.getText().toString();
+        String size = sizeInput.getText().toString();
+
+        Cursor c;
+
+        String sizeQuery = "";
+        String tagsQuery = "";
+
+        if (!size.equals("")) {
+            int sizeNum = Integer.parseInt(size, 10);
+            int maxSize = (int) Math.round(sizeNum * 1.25);
+            int minSize = (int) Math.round(sizeNum * 0.75);
+
+            sizeQuery = String.format("size > %d AND size < %d", minSize, maxSize);
+        }
+
+        if (!tags.equals("")) {
+            String[] tagList = tags.split(";");
+
+            boolean isFirst = true;
+
+            for (String tag : tagList) {
+                if (!isFirst) {
+                    tagsQuery += " AND ";
+                }
+
+                tagsQuery += "tags LIKE '%" + tag + "%'";
+
+                isFirst = false;
+            }
+        }
+
+        if (!sizeQuery.equals("") && !tagsQuery.equals("")) {
+            c = db.rawQuery(
+                    "SELECT * FROM photos WHERE " + sizeQuery + " AND " + tagsQuery + " LIMIT 1",
+                    new String[] {});
+        } else if (!sizeQuery.equals("")) {
+            c = db.rawQuery(
+                    "SELECT * FROM photos WHERE " + sizeQuery + " LIMIT 1",
+                    new String[] {});
+        } else if (!tagsQuery.equals("")) {
+            c = db.rawQuery(
+                    "SELECT * FROM photos WHERE " + tagsQuery + " LIMIT 1",
+                    new String[] {});
+        } else {
+            c = db.rawQuery(
+                    "SELECT * FROM photos LIMIT 1",
+                    new String[] {});
+        }
+
+        if (c.moveToFirst()) {
+            currentPhotoPath = c.getString(c.getColumnIndexOrThrow("path"));
+            String newTags = c.getString(c.getColumnIndexOrThrow("tags"));
+
+            displayImage(currentPhotoPath);
+
+            tagsInput.setText(newTags);
+        } else {
+            Toast.makeText(this, "No Results", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void saveImage() {
-        String tags = "";
+        EditText tagsInput = (EditText) findViewById(R.id.input_tags);
+        String tags = tagsInput.getText().toString();
 
         Cursor c = db.rawQuery("SELECT path FROM photos WHERE path = ?", new String[] {currentPhotoPath});
 

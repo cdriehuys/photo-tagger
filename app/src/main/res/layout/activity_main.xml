@@ -32,6 +32,7 @@
 
             <EditText
                 android:hint="Tags"
+                android:id="@+id/input_tags"
                 android:layout_gravity="fill"
                 android:layout_marginLeft="8dp"
                 android:layout_marginStart="8dp" />
@@ -43,6 +44,7 @@
 
             <EditText
                 android:hint="Size"
+                android:id="@+id/input_size"
                 android:inputType="number"
                 android:layout_gravity="fill"
                 android:layout_marginLeft="8dp"
