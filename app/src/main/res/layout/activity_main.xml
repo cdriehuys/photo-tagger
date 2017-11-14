@@ -16,6 +16,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent">
         <ImageView
+            android:id="@+id/current_image"
             android:layout_width="match_parent"
             android:layout_height="200dp" />
 
