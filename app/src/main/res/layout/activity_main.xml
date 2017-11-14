@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context="com.unc.driehuys.chathan.phototagger.MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/action_buttons"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+        <ImageView
+            android:id="@+id/current_image"
+            android:layout_width="match_parent"
+            android:layout_height="200dp" />
+
+        <SeekBar
+            android:id="@+id/seek_images"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible" />
+
+        <GridLayout
+            android:columnCount="2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:gravity="center_vertical"
+                android:layout_gravity="fill"
+                android:text="Tags"/>
+
+            <EditText
+                android:hint="Tags"
+                android:id="@+id/input_tags"
+                android:layout_gravity="fill"
+                android:layout_marginLeft="8dp"
+                android:layout_marginStart="8dp" />
+
+            <TextView
+                android:gravity="center_vertical"
+                android:layout_gravity="fill"
+                android:text="Size (bytes)"/>
+
+            <EditText
+                android:hint="Size"
+                android:id="@+id/input_size"
+                android:inputType="number"
+                android:layout_gravity="fill"
+                android:layout_marginLeft="8dp"
+                android:layout_marginStart="8dp" />
+
+        </GridLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/action_buttons"
+        android:layout_height="wrap_content"
+        android:layout_width="336dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent">
+        <LinearLayout
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent">
+            <Button
+                android:id="@+id/btn_save"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:onClick="onClick"
+                android:text="Save"/>
+            <Button
+                android:id="@+id/btn_load"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:onClick="onClick"
+                android:text="Load"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_capture"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:onClick="onClick"
+            android:text="Capture" />
+    </LinearLayout>
+
+</android.support.constraint.ConstraintLayout>
